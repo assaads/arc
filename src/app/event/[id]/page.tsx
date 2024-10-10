@@ -9,7 +9,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon, ClockIcon, InfoIcon } from 'lucide
 // Sample event data (in a real app, this would come from an API or database)
 const events = [
   {
-    id: "1",
+    id: 1,
     title: "Mountain Trail Challenge",
     date: "2023-08-15",
     time: "07:00 AM",
@@ -34,7 +34,7 @@ export default function EventPage() {
   const id = searchParams.get('id'); // Accessing the id from search parameters
 
   // Find the event based on the id from the URL
-  const event = events.find(e => e.id === "1");
+  const event = events.find(e => e.id === 1);
 
   if (!event) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">Event not found</div>;

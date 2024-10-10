@@ -7,6 +7,11 @@ import { ClerkProvider, SignInButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Mountain } from 'lucide-react'
 
+// Check if the current device is mobile
+const isMobileDevice = () => {
+  return typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent)
+}
+
 function AnimatedSpheres({ mouse }) {
   const spheres = useRef(Array.from({ length: 50 }, (_, i) => ({
     position: [
@@ -41,9 +46,16 @@ function Scene({ mouse }) {
   const { camera } = useThree()
 
   useFrame(() => {
-    // Update camera based on mouse or device orientation (values from mouse.current)
-    camera.position.x = Math.sin(mouse.current[0]) * 3 // Slower movement
-    camera.position.y = Math.sin(mouse.current[1]) * 1.5
+    // If on mobile, use device orientation (values from all three axes: alpha, beta, gamma)
+    if (isMobileDevice()) {
+      camera.position.x = Math.sin(mouse.current[0]) * 5 // Increase sensitivity
+      camera.position.y = Math.sin(mouse.current[1]) * 5
+      camera.rotation.z = mouse.current[2] // Apply rotation for the Z-axis (for 3D rotation)
+    } else {
+      // On desktop, use the mouse for x and y movement
+      camera.position.x = Math.sin(mouse.current[0]) * 3 // Slower movement for desktop
+      camera.position.y = Math.sin(mouse.current[1]) * 1.5
+    }
     camera.lookAt(0, 0, 0)
   })
 
@@ -57,38 +69,46 @@ function Scene({ mouse }) {
 
 export default function AdventureRacingClub() {
   const [mounted, setMounted] = useState(false)
-  const mouse = useRef([0, 0])
+  const mouse = useRef([0, 0, 0]) // We will track all three axes for mobile
 
   useEffect(() => {
     setMounted(true)
 
     const handleMouseMove = (event) => {
-      mouse.current = [
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-      ]
+      if (!isMobileDevice()) {
+        mouse.current = [
+          (event.clientX / window.innerWidth) * 2 - 1,
+          -(event.clientY / window.innerHeight) * 2 + 1,
+          0 // Z-axis remains 0 for desktop as there's no rotation needed
+        ]
+      }
     }
 
     const handleDeviceOrientation = (event) => {
       const { alpha, beta, gamma } = event
-      // Adjust sensitivity of the device orientation input
+      // Adjust sensitivity of the device orientation input for mobile
       mouse.current = [
-        gamma / 90, // Gamma controls left-right tilt
-        beta / 90   // Beta controls front-back tilt
+        gamma / 90,   // Gamma controls left-right tilt (x-axis)
+        beta / 90,    // Beta controls front-back tilt (y-axis)
+        alpha / 180   // Alpha controls rotation around z-axis (z-axis)
       ]
     }
 
     // Desktop mouse events
-    window.addEventListener('mousemove', handleMouseMove)
+    if (!isMobileDevice()) {
+      window.addEventListener('mousemove', handleMouseMove)
+    }
     
     // Mobile device orientation events
-    if (window.DeviceOrientationEvent) {
+    if (window.DeviceOrientationEvent && isMobileDevice()) {
       window.addEventListener('deviceorientation', handleDeviceOrientation)
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      if (window.DeviceOrientationEvent) {
+      if (!isMobileDevice()) {
+        window.removeEventListener('mousemove', handleMouseMove)
+      }
+      if (window.DeviceOrientationEvent && isMobileDevice()) {
         window.removeEventListener('deviceorientation', handleDeviceOrientation)
       }
     }
