@@ -1,10 +1,9 @@
 'use client'
 
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
 import { useState } from 'react'
-import { UserButton, SignOutButton, ClerkProvider } from '@clerk/nextjs'
+import { UserButton, ClerkProvider } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { Home, Calendar, Settings, Menu, X, LogOut } from 'lucide-react'
+import { Home, Calendar, Settings, Menu, X } from 'lucide-react'
 import HomeSection from '@/app/dashboard/home/page'
 import EventsSection from '@/app/dashboard/events/page'
 import SettingsSection from '@/app/dashboard/settings/page'

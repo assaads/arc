@@ -10,7 +10,7 @@ import Link from 'next/link'
 // Sample event data
 const events = [
   {
-    id: 1,
+    id: "1",
     title: "Mountain Trail Challenge",
     location: "Rocky Mountains, CO",
     difficulty: "Hard",
