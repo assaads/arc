@@ -1,16 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { UserButton, ClerkProvider } from '@clerk/nextjs'
+import { UserButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Home, Calendar, Settings, Menu, X } from 'lucide-react'
-import HomeSection from '@/app/dashboard/home/page'
-import EventsSection from '@/app/dashboard/events/page'
-import SettingsSection from '@/app/dashboard/settings/page'
+import HomeSection from './home/page'
+import EventsSection from './events/page'
+import SettingsSection from './settings/page'
 
 type Section = 'home' | 'events' | 'settings'
 
-export default function DashboardComponent() {
+interface DashboardComponentProps {
+  children?: React.ReactNode;
+}
+
+export default function DashboardComponent({ children }: DashboardComponentProps) {
   const [isSidenavOpen, setIsSidenavOpen] = useState(true)
   const [activeSection, setActiveSection] = useState<Section>('home')
 
@@ -24,6 +28,8 @@ export default function DashboardComponent() {
         return <EventsSection />
       case 'settings':
         return <SettingsSection />
+      default:
+        return children
     }
   }
 
@@ -73,11 +79,9 @@ export default function DashboardComponent() {
               {isSidenavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
             <h1 className="text-2xl font-bold">Adventure Racing Club</h1>
-            <ClerkProvider>
             <div className="flex items-center space-x-4">
               <UserButton afterSignOutUrl="/" />
             </div>
-            </ClerkProvider>
           </header>
 
           {/* Content */}

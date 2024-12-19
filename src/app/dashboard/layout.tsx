@@ -1,9 +1,9 @@
 import DashboardComponent from "./dashboard";
 
-const DashboardLayout = ({ children }) => {
-  return (
-    <DashboardComponent />
-  );
-};
-
-export default DashboardLayout;
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <DashboardComponent>{children}</DashboardComponent>;
+}
