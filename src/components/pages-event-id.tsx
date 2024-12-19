@@ -1,43 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarIcon, MapPinIcon, UsersIcon, ClockIcon, InfoIcon } from 'lucide-react'
 
-// Sample event data (in a real app, this would come from an API or database)
-const events = [
-  {
-    id: 1,
-    title: "Mountain Trail Challenge",
-    date: "2023-08-15",
-    time: "07:00 AM",
-    location: "Rocky Mountains, CO",
-    participants: 150,
-    difficulty: "Hard",
-    description: "Experience the thrill of racing through challenging mountain trails. This event will test your endurance and skill in a beautiful alpine setting.",
-    requirements: "Good physical condition, trail running experience, proper trail running shoes, and hydration pack.",
-    schedule: [
-      { time: "06:00 AM", activity: "Check-in opens" },
-      { time: "06:45 AM", activity: "Pre-race briefing" },
-      { time: "07:00 AM", activity: "Race starts" },
-      { time: "03:00 PM", activity: "Cut-off time" },
-      { time: "04:00 PM", activity: "Awards ceremony" },
-    ]
-  },
-  // ... other events
-]
+interface Event {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  participants: number;
+  difficulty: string;
+  description: string;
+  requirements: string;
+  schedule: Array<{
+    time: string;
+    activity: string;
+  }>;
+}
 
-export function Id() {
-  const router = useRouter()
-  const { id } = router.query
+interface EventDetailProps {
+  event: Event;
+  onBack: () => void;
+}
+
+export function EventDetail({ event, onBack }: EventDetailProps) {
   const [isRegistered, setIsRegistered] = useState(false)
-
-  // Find the event based on the id from the URL
-  const event = events.find(e => e.id === Number(id))
 
   if (!event) {
     return <div className="text-center p-8">Event not found</div>
@@ -45,6 +37,13 @@ export function Id() {
 
   return (
     <div className="container mx-auto p-4">
+      <Button 
+        variant="ghost" 
+        onClick={onBack}
+        className="mb-4"
+      >
+        ← Back to Events
+      </Button>
       <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex justify-between items-start">

@@ -28,10 +28,10 @@ export default function DashboardComponent() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
         {/* Sidenav */}
         <div
-          className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          className={`bg-white shadow-lg transition-all duration-300 ease-in-out h-screen sticky top-0 ${
             isSidenavOpen ? 'w-64' : 'w-0'
           }`}
         >
@@ -66,9 +66,9 @@ export default function DashboardComponent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col h-screen overflow-auto">
           {/* Header */}
-          <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+          <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
             <Button variant="ghost" size="icon" onClick={toggleSidenav}>
               {isSidenavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
