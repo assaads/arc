@@ -1,9 +1,14 @@
-import DashboardComponent from "./dashboard";
+import DashboardComponent from "./dashboard"
+import ProtectedAdminLayout from "@/components/protected-admin-layout"
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return <DashboardComponent>{children}</DashboardComponent>;
+  return (
+    <ProtectedAdminLayout>
+      <DashboardComponent>{children}</DashboardComponent>
+    </ProtectedAdminLayout>
+  )
 }

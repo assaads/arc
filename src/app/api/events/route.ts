@@ -1,62 +1,83 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from "next/server"
+import { auth, clerkClient } from "@clerk/nextjs/server"
+import { prisma } from "@/lib/db"
+import { isAdmin } from "@/lib/roles"
 
-// Get all events (filtered by access)
-export async function GET() {
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth()
-    
-    const events = await prisma.event.findMany({
-      where: {
-        OR: [
-          { isPublic: true },
-          { createdById: userId }
-        ]
+    const isAdminUser = await isAdmin()
+    if (!isAdminUser) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const eventData = await request.json()
+    const { userId } = auth()
+
+    const event = await prisma.event.create({
+      data: {
+        ...eventData,
+        createdById: userId!,
       },
-      include: {
-        registrations: true
-      },
-      orderBy: {
-        startDate: 'asc'
-      }
     })
-    
-    return NextResponse.json(events)
+
+    return NextResponse.json(event)
   } catch (error) {
-    console.error('Failed to fetch events:', error)
+    console.error("Failed to create event:", error)
     return NextResponse.json(
-      { error: 'Failed to fetch events' },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }
 }
 
-// Create new event (admin only)
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const isAdminUser = await isAdmin()
+    const { userId } = auth()
+
+    let events
+    if (isAdminUser) {
+      // Admins can see all events
+      events = await prisma.event.findMany({
+        include: {
+          registrations: true,
+        },
+        orderBy: {
+          startDate: 'asc',
+        },
+      })
+    } else {
+      // Regular users can only see public events or events they're registered for
+      events = await prisma.event.findMany({
+        where: {
+          OR: [
+            { isPublic: true },
+            {
+              registrations: {
+                some: {
+                  userId: userId!,
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          registrations: true,
+        },
+        orderBy: {
+          startDate: 'asc',
+        },
+      })
     }
 
-    const data = await request.json()
-    
-    const event = await prisma.event.create({
-      data: {
-        ...data,
-        createdById: userId,
-      }
-    })
-    
-    return NextResponse.json(event)
+    return NextResponse.json(events)
   } catch (error) {
-    console.error('Failed to create event:', error)
+    console.error("Failed to fetch events:", error)
     return NextResponse.json(
-      { error: 'Failed to create event' },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

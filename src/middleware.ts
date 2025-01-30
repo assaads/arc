@@ -1,27 +1,28 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { authMiddleware, clerkClient } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
- 
-export default clerkMiddleware((auth, request) => {
-  // Allow public routes
-  const publicPaths = ["/", "/sign-in", "/sign-up"];
-  const isPublic = publicPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
-  if (isPublic) {
+// This example protects all routes including api/trpc routes
+export default authMiddleware({
+  publicRoutes: ["/", "/sign-in", "/sign-up"],
+  async afterAuth(auth, req) {
+    // Handle users who aren't authenticated
+    if (!auth.userId && !auth.isPublicRoute) {
+      return Response.redirect(new URL('/sign-in', req.url));
+    }
+
+    // If the user is logged in and trying to access admin routes
+    if (auth.userId && req.nextUrl.pathname.startsWith('/dashboard')) {
+      const user = await clerkClient.users.getUser(auth.userId);
+      const isAdmin = user?.publicMetadata?.role === 'admin';
+
+      if (!isAdmin) {
+        return Response.redirect(new URL('/', req.url));
+      }
+    }
+
     return NextResponse.next();
-  }
-
-  // Continue with auth flow
-  return NextResponse.next();
+  },
 });
- 
+
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
-};
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
