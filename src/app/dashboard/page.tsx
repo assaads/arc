@@ -1,10 +1,7 @@
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
+import { redirect } from 'next/navigation'
 
-const DashboardPage = () => {
-  return (
-    <>
-    </>
-  );
-};
+export const dynamic = 'force-dynamic'
 
-export default DashboardPage;
+export default function DashboardPage() {
+  redirect('/dashboard/home')
+}

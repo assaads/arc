@@ -4,11 +4,7 @@ import { useState } from 'react'
 import { UserButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Home, Calendar, Settings, Menu, X } from 'lucide-react'
-import HomeSection from './home/page'
-import EventsSection from './events/page'
-import SettingsSection from './settings/page'
-
-type Section = 'home' | 'events' | 'settings'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface DashboardComponentProps {
   children?: React.ReactNode;
@@ -16,22 +12,12 @@ interface DashboardComponentProps {
 
 export default function DashboardComponent({ children }: DashboardComponentProps) {
   const [isSidenavOpen, setIsSidenavOpen] = useState(true)
-  const [activeSection, setActiveSection] = useState<Section>('home')
+  const router = useRouter()
+  const pathname = usePathname()
 
   const toggleSidenav = () => setIsSidenavOpen(!isSidenavOpen)
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'home':
-        return <HomeSection />
-      case 'events':
-        return <EventsSection />
-      case 'settings':
-        return <SettingsSection />
-      default:
-        return children
-    }
-  }
+  const isActive = (path: string) => pathname === path
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -45,24 +31,24 @@ export default function DashboardComponent({ children }: DashboardComponentProps
             <nav className="flex flex-col p-4 space-y-4">
               <Button
                 variant="ghost"
-                className={`justify-start ${activeSection === 'home' ? 'bg-gray-200' : ''}`}
-                onClick={() => setActiveSection('home')}
+                className={`justify-start ${isActive('/dashboard/home') ? 'bg-gray-200' : ''}`}
+                onClick={() => router.push('/dashboard/home')}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Home
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${activeSection === 'events' ? 'bg-gray-200' : ''}`}
-                onClick={() => setActiveSection('events')}
+                className={`justify-start ${isActive('/dashboard/events') ? 'bg-gray-200' : ''}`}
+                onClick={() => router.push('/dashboard/events')}
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 Events
               </Button>
               <Button
                 variant="ghost"
-                className={`justify-start ${activeSection === 'settings' ? 'bg-gray-200' : ''}`}
-                onClick={() => setActiveSection('settings')}
+                className={`justify-start ${isActive('/dashboard/settings') ? 'bg-gray-200' : ''}`}
+                onClick={() => router.push('/dashboard/settings')}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
@@ -86,7 +72,7 @@ export default function DashboardComponent({ children }: DashboardComponentProps
 
           {/* Content */}
           <main className="flex-1 p-6 relative">
-            {renderContent()}
+            {children}
             <Button
               variant="outline"
               size="icon"
