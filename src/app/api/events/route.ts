@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth, clerkClient } from "@clerk/nextjs/server"
+import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/db"
 import { isAdmin } from "@/lib/roles"
 
 export async function POST(request: NextRequest) {
+  const authResult = await auth()
+  if (!authResult.userId) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
   try {
     const isAdminUser = await isAdmin()
     if (!isAdminUser) {
@@ -14,12 +21,10 @@ export async function POST(request: NextRequest) {
     }
 
     const eventData = await request.json()
-    const { userId } = auth()
-
     const event = await prisma.event.create({
       data: {
         ...eventData,
-        createdById: userId!,
+        createdById: authResult.userId,
       },
     })
 
@@ -33,10 +38,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const isAdminUser = await isAdmin()
-    const { userId } = auth()
+    const authResult = await auth()
+    if (!authResult.userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
 
     let events
     if (isAdminUser) {
@@ -58,7 +69,7 @@ export async function GET(request: NextRequest) {
             {
               registrations: {
                 some: {
-                  userId: userId!,
+                  userId: authResult.userId, // Now we know userId is not null
                 },
               },
             },

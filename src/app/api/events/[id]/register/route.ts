@@ -1,67 +1,70 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
+import { prisma } from "@/lib/db"
 
-// Register for an event
 export async function POST(
-  request: Request,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+  const authResult = await auth()
+  if (!authResult.userId) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
 
-    // Check if event exists and is open for registration
+  try {
+    // Check if event exists and registration is open
     const event = await prisma.event.findUnique({
       where: { id: params.id },
       include: {
-        registrations: true
-      }
+        registrations: true,
+      },
     })
 
     if (!event) {
       return NextResponse.json(
-        { error: 'Event not found' },
+        { error: "Event not found" },
         { status: 404 }
       )
     }
 
     // Check if registration is open
-    if (event.registrationStatus !== 'open') {
+    if (event.registrationStatus !== "open") {
       return NextResponse.json(
-        { error: 'Registration is closed for this event' },
+        { error: "Registration is closed for this event" },
         { status: 400 }
       )
     }
 
-    // Check if event is public or user has access
-    if (!event.isPublic && event.createdById !== userId) {
+    // Check if event is private and user has access
+    if (!event.isPublic) {
       return NextResponse.json(
-        { error: 'Unauthorized access to private event' },
+        { error: "This event is private" },
         { status: 401 }
-      )
-    }
-
-    // Check if user is already registered
-    const existingRegistration = event.registrations.find(
-      (reg: { userId: string }) => reg.userId === userId
-    )
-    if (existingRegistration) {
-      return NextResponse.json(
-        { error: 'Already registered for this event' },
-        { status: 400 }
       )
     }
 
     // Check if event is at capacity
     if (event.registrations.length >= event.capacity) {
       return NextResponse.json(
-        { error: 'Event is at capacity' },
+        { error: "Event is at capacity" },
+        { status: 400 }
+      )
+    }
+
+    // Check if user is already registered
+    const existingRegistration = await prisma.registration.findFirst({
+      where: {
+        eventId: params.id,
+        userId: authResult.userId,
+      },
+    })
+
+    if (existingRegistration) {
+      return NextResponse.json(
+        { error: "Already registered for this event" },
         { status: 400 }
       )
     }
@@ -69,61 +72,63 @@ export async function POST(
     // Create registration
     const registration = await prisma.registration.create({
       data: {
+        userId: authResult.userId,
         eventId: params.id,
-        userId,
-        status: 'confirmed'
-      }
+        status: "registered",
+        registrationDate: new Date().toISOString(),
+      },
     })
 
     return NextResponse.json(registration)
   } catch (error) {
-    console.error('Failed to register for event:', error)
+    console.error("Failed to register for event:", error)
     return NextResponse.json(
-      { error: 'Failed to register for event' },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }
 }
 
-// Cancel registration
 export async function DELETE(
-  request: Request,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+  const authResult = await auth()
+  if (!authResult.userId) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
 
-    // Find existing registration
+  try {
+    // Check if registration exists
     const registration = await prisma.registration.findFirst({
       where: {
         eventId: params.id,
-        userId
-      }
+        userId: authResult.userId,
+      },
     })
 
     if (!registration) {
       return NextResponse.json(
-        { error: 'Registration not found' },
+        { error: "Registration not found" },
         { status: 404 }
       )
     }
 
     // Delete registration
     await prisma.registration.delete({
-      where: { id: registration.id }
+      where: {
+        id: registration.id,
+      },
     })
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Failed to cancel registration:', error)
+    console.error("Failed to cancel registration:", error)
     return NextResponse.json(
-      { error: 'Failed to cancel registration' },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

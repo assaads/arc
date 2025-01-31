@@ -7,31 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge"
 import { MapPinIcon, Plus, Edit, Trash2, X } from 'lucide-react'
 import EventForm, { EventFormData } from '@/components/event-form'
+import { useToast } from "@/components/ui/use-toast"
 
-interface Registration {
-  id: string
-  userId: string
-  status: string
-  registrationDate: string
-}
+import type { Event, Registration } from "@prisma/client"
 
-interface Event {
-  id: string
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  location: string
-  capacity: number
-  difficultyLevel: string
-  isPublic: boolean
-  status: string
-  registrationStatus: string
+type EventWithRegistrations = Event & {
   registrations: Registration[]
 }
 
 export default function EventsSection() {
-  const [events, setEvents] = useState<Event[]>([])
+  const { toast } = useToast()
+  const [events, setEvents] = useState<EventWithRegistrations[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -64,13 +50,25 @@ export default function EventsSection() {
 
       if (response.ok) {
         fetchEvents() // Refresh the events list
+        toast({
+          title: "Event deleted",
+          description: "The event has been deleted successfully.",
+        })
       } else {
         const error = await response.json()
-        alert(error.message || 'Failed to delete event')
+        toast({
+          variant: "destructive",
+          title: "Failed to delete event",
+          description: error.message || "Something went wrong",
+        })
       }
     } catch (error) {
       console.error('Failed to delete event:', error)
-      alert('Failed to delete event')
+      toast({
+        variant: "destructive",
+        title: "Failed to delete event",
+        description: "Something went wrong",
+      })
     }
   }
 
@@ -99,6 +97,8 @@ export default function EventsSection() {
           },
           body: JSON.stringify({
             ...formData,
+            startDate: new Date(formData.startDate).toISOString(),
+            endDate: new Date(formData.endDate).toISOString(),
             status: editingEvent?.status || 'draft' // Default status for new events
           }),
         }
@@ -111,9 +111,17 @@ export default function EventsSection() {
       await fetchEvents()
       setShowForm(false)
       setEditingEvent(null)
+      toast({
+        title: editingEvent ? "Event updated" : "Event created",
+        description: "Your event has been saved successfully.",
+      })
     } catch (error) {
       console.error('Failed to save event:', error)
-      alert('Failed to save event')
+      toast({
+        variant: "destructive",
+        title: "Failed to save event",
+        description: "Something went wrong. Please try again.",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -139,8 +147,8 @@ export default function EventsSection() {
           initialData={editingEvent ? {
             name: editingEvent.name,
             description: editingEvent.description,
-            startDate: editingEvent.startDate,
-            endDate: editingEvent.endDate,
+            startDate: editingEvent.startDate.toISOString().slice(0, 16),
+            endDate: editingEvent.endDate.toISOString().slice(0, 16),
             location: editingEvent.location,
             capacity: editingEvent.capacity,
             difficultyLevel: editingEvent.difficultyLevel,
@@ -181,10 +189,15 @@ export default function EventsSection() {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">{event.name}</CardTitle>
               <CardDescription>
-                <div className="flex items-center mt-1">
+              <div className="space-y-1">
+                <div className="flex items-center">
                   <MapPinIcon className="mr-2 h-4 w-4" />
                   {event.location}
                 </div>
+                <div className="text-sm text-muted-foreground">
+                  {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                </div>
+              </div>
               </CardDescription>
             </CardHeader>
             <CardContent>

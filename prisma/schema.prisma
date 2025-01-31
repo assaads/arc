@@ -1,40 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Event {
-  id                String    @id @default(cuid())
-  name              String
-  description       String
-  startDate         DateTime
-  endDate           DateTime
-  location          String
-  capacity          Int
-  difficultyLevel   String
-  isPublic          Boolean   @default(true)
-  createdById       String    // Clerk Admin ID
-  status            String    // draft, published, active, completed
-  registrationStatus String   // open, closed
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  registrations     Registration[]
+  id                String         @id @default(cuid())
+  name             String
+  description      String
+  startDate        DateTime
+  endDate          DateTime
+  location         String
+  capacity         Int
+  difficultyLevel  String
+  isPublic         Boolean        @default(true)
+  status           String         @default("draft") // draft, published, cancelled
+  registrationStatus String       @default("closed") // open, closed
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  createdById      String        // Clerk user ID
+  registrations    Registration[]
 }
 
 model Registration {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
+  userId           String   // Clerk user ID
   eventId          String
-  userId           String    // Clerk User ID
-  registrationDate DateTime  @default(now())
-  status           String    // pending, confirmed, cancelled
-  event            Event     @relation(fields: [eventId], references: [id])
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status           String   @default("registered") // registered, cancelled
+  registrationDate DateTime @default(now())
 
-  @@index([eventId])
-  @@index([userId])
+  @@unique([userId, eventId]) // Prevent duplicate registrations
 }
