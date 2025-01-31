@@ -31,14 +31,15 @@ export default function RootLayout({
       appearance={{
         baseTheme: dark,
         variables: {
-          colorPrimary: "hsl(var(--primary))",
-          colorTextOnPrimaryBackground: "hsl(var(--primary-foreground))",
+          colorPrimary: "#0f172a",
+          colorTextOnPrimaryBackground: "#ffffff",
           fontFamily: "var(--font-geist-sans)",
-          colorBackground: "hsl(var(--background))",
-          colorInputBackground: "hsl(var(--background))",
-          colorInputText: "hsl(var(--foreground))",
-        },
+        }
       }}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
     >
       <html lang="en" suppressHydrationWarning>
         <body

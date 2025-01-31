@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Sphere } from '@react-three/drei'
-import { SignInButton } from '@clerk/nextjs'
+import { SignInButton, SignedOut } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Mountain } from 'lucide-react'
 
@@ -141,11 +141,13 @@ export default function AdventureRacingClub() {
           <p className="text-xl md:text-2xl text-gray-600 text-center max-w-2xl font-light">
             Join our community of thrill-seekers and push your limits in the great outdoors.
           </p>
-          <SignInButton mode="modal">
-            <Button className="text-lg font-bold px-8 py-4" size="lg">
-              Sign In / Sign Up
-            </Button>
-          </SignInButton>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button className="text-lg font-bold px-8 py-4" size="lg">
+                Sign In / Sign Up
+              </Button>
+            </SignInButton>
+          </SignedOut>
         </main>
         <footer className="w-full text-center text-gray-600">
           <p>&copy; 2024 Adventure Racing Club. All rights reserved.</p>

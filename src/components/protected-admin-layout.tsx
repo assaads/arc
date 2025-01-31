@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { isAdmin } from '@/lib/roles'
+import { checkAdminStatus } from '@/lib/auth-actions'
 
 export default function ProtectedAdminLayout({
   children,
@@ -21,7 +21,7 @@ export default function ProtectedAdminLayout({
         return
       }
 
-      const adminStatus = await isAdmin()
+      const adminStatus = await checkAdminStatus()
       if (!adminStatus) {
         router.push('/')
       }
