@@ -1,28 +1,39 @@
-import { authMiddleware, clerkClient } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { Role } from './types/clerk';
 
-// This example protects all routes including api/trpc routes
-export default authMiddleware({
-  publicRoutes: ["/", "/sign-in", "/sign-up"],
-  async afterAuth(auth, req) {
-    // Handle users who aren't authenticated
-    if (!auth.userId && !auth.isPublicRoute) {
-      return Response.redirect(new URL('/sign-in', req.url));
+const isDashboardRoute = createRouteMatcher(['/dashboard(.*)']);
+
+export default clerkMiddleware(async (auth, req) => {
+  const { sessionClaims, userId } = await auth();
+  
+  // Public routes that don't require authentication
+  const isPublicRoute = 
+    req.url.includes('/sign-in') || 
+    req.url.includes('/sign-up') || 
+    req.url.includes('/');
+
+  // Handle users who aren't authenticated
+  if (!userId && !isPublicRoute) {
+    const signInUrl = new URL('/sign-in', req.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Protect dashboard routes with admin check
+  if (isDashboardRoute(req)) {
+    const userRole = sessionClaims?.metadata?.role as Role;
+    if (userRole !== 'admin') {
+      const homeUrl = new URL('/', req.url);
+      return NextResponse.redirect(homeUrl);
     }
+  }
 
-    // If the user is logged in and trying to access admin routes
-    if (auth.userId && req.nextUrl.pathname.startsWith('/dashboard')) {
-      const user = await clerkClient.users.getUser(auth.userId);
-      const isAdmin = user?.publicMetadata?.role === 'admin';
-
-      if (!isAdmin) {
-        return Response.redirect(new URL('/', req.url));
-      }
-    }
-
-    return NextResponse.next();
-  },
+  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
+};
